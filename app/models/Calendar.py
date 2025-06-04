@@ -26,8 +26,8 @@ class Calendar:
     def update_event(self, event_id: str, updates: dict):
         event = self.get_event_by_id(event_id)
 
-        if "title" in updates:
-            event.set_title(updates["title"])
+        if "summary" in updates:
+            event.set_summary(updates["summary"])
         if "start_time" in updates:
             event.set_start_time(updates["start_time"])
         if "end_time" in updates:
@@ -88,6 +88,10 @@ class Calendar:
             "user_id": self.user_id,
             "events": [serialize_event(e) for e in self.events]
         }
+    
+
+    def to_dict(self):
+        return self.to_serializable_dict()
 
 
     def sort_events(self):

@@ -2,9 +2,9 @@ import uuid
 from datetime import datetime
 
 class Event:
-    def __init__(self, title: str, start_time: datetime, end_time: datetime, notes: str, location: str = "", calendar_id: str = None, event_id: str = None):
+    def __init__(self, summary: str, start_time: datetime, end_time: datetime, notes: str, location: str = "", calendar_id: str = None, event_id: str = None):
         self.id = event_id or str(uuid.uuid4())
-        self.title = title
+        self.summary = summary
         self.start_time = start_time
         self.end_time = end_time
         self.notes = notes
@@ -16,15 +16,15 @@ class Event:
         return self.id
 
     
-    def set_title(self, new_title:str):
-        if not isinstance(new_title, str) or not new_title.strip():
-            raise ValueError("Event title must be included.")
-        if len(new_title) > 100:
-            raise ValueError("Event title is too long.")
-        self.title = new_title.strip()
+    def set_summary(self, new_summary:str):
+        if not isinstance(new_summary, str) or not new_summary.strip():
+            raise ValueError("Event Summary must be included.")
+        if len(new_summary) > 100:
+            raise ValueError("Event Summary is too long.")
+        self.summary = new_summary.strip()
 
-    def get_title(self):
-        return self.title
+    def get_summary(self):
+        return self.summary
     
     def get_duration(self):
         return self.end_time - self.start_time
@@ -77,7 +77,7 @@ class Event:
     def to_dict(self):
         return {
             "id": self.id,
-            "title": self.title,
+            "summary": self.summary,
             "start": self.start_time,
             "end": self.end_time,
             "notes": self.notes,
@@ -87,4 +87,4 @@ class Event:
     
 
     def __repr__(self):
-        return f"Event({self.title}, {self.start_time}–{self.end_time})"
+        return f"Event({self.summary}, {self.start_time}–{self.end_time})"
