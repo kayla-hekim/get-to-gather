@@ -18,6 +18,11 @@ from dateutil.parser import parse as parse_datetime
 from sqlalchemy.future import select
 from sqlalchemy import and_
 
+from app.models.user_db import UserDB
+from app.models.calendar_db import CalendarDB
+
+
+
 
 router = APIRouter()
 
@@ -61,6 +66,24 @@ async def auth_callback(request: Request, db: AsyncSession = Depends(get_db)):
     profile_info = service.calendarList().get(calendarId='primary').execute()
     google_email = profile_info.get("id", "unknown_user")
 
+    result = await db.execute(select(UserDB).where(UserDB.email == google_email))
+    existing_user = result.scalar_one_or_none()
+
+    if not existing_user:
+        new_user = UserDB(email=google_email)
+        db.add(new_user)
+        await db.commit()
+        await db.refresh(new_user)  # gets new_user.user_id
+        user_id = new_user.id
+    else:
+        user_id = existing_user.id
+
+    user_info = service.settings().get(setting='timezone').execute()  # simple API call just to test access
+    # you can later use Google People API to get full name
+
+    # Save user
+    await get_or_create_user(db, user_id)
+
     events_result = service.events().list(
         calendarId='primary',
         maxResults=15,
@@ -69,6 +92,17 @@ async def auth_callback(request: Request, db: AsyncSession = Depends(get_db)):
     ).execute()
 
     events = events_result.get('items', [])
+
+    from app.models.calendar_db import CalendarDB
+
+    result = await db.execute(select(CalendarDB).where(CalendarDB.user_id == user_id))
+    calendar = result.scalar_one_or_none()
+
+    if not calendar:
+        calendar = CalendarDB(user_id=user_id)
+        db.add(calendar)
+        await db.commit()
+        await db.refresh(calendar)
 
 
     # temp_user = User(user_id="test69")
@@ -82,7 +116,6 @@ async def auth_callback(request: Request, db: AsyncSession = Depends(get_db)):
         exists_query = await db.execute(
             select(EventDB).where(
                 and_(
-                    EventDB.user_id == google_email,
                     EventDB.summary == e.get("summary", "Untitled"),
                     EventDB.start_time == parse_datetime(e["start"]["dateTime"])
                 )
@@ -94,7 +127,7 @@ async def auth_callback(request: Request, db: AsyncSession = Depends(get_db)):
             continue  # skip duplicates
 
         new_event = EventDB(
-            user_id=google_email,
+            calendar_id=calendar.id,
             summary=e.get("summary", "Untitled"),
             start_time=parse_datetime(e["start"]["dateTime"]),
             end_time=parse_datetime(e["end"]["dateTime"]),
@@ -106,13 +139,21 @@ async def auth_callback(request: Request, db: AsyncSession = Depends(get_db)):
 
     await db.commit()
 
-    return RedirectResponse(url=f"http://localhost:3000/calendar/{google_email}")
+    return RedirectResponse(url=f"http://localhost:3000/calendar/{user_id}")
 
 
 @router.get("/calendar/{user_id}")
-async def get_user_calendar(user_id: str, db: AsyncSession = Depends(get_db)):
+async def get_user_calendar(user_id: int, db: AsyncSession = Depends(get_db)):
+    calendar_result = await db.execute(
+        select(CalendarDB.id).where(CalendarDB.user_id == user_id)
+    )
+    calendar_ids = [row[0] for row in calendar_result.all()]
+
+    if not calendar_ids:
+        return {"events": []}
+
     result = await db.execute(
-        select(EventDB).where(EventDB.user_id == user_id)
+        select(EventDB).where(EventDB.calendar_id.in_(calendar_ids))
     )
     events = result.scalars().all()
 

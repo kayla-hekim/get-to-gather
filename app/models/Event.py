@@ -2,8 +2,8 @@ import uuid
 from datetime import datetime
 
 class Event:
-    def __init__(self, summary: str, start_time: datetime, end_time: datetime, notes: str, location: str = "", calendar_id: str = None, event_id: str = None):
-        self.id = event_id or str(uuid.uuid4())
+    def __init__(self, summary: str, start_time: datetime, end_time: datetime, notes: str, location: str = "", calendar_id: int = -1, event_id: int = -1):
+        self.id = event_id or -1
         self.summary = summary
         self.start_time = start_time
         self.end_time = end_time

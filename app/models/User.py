@@ -3,7 +3,7 @@ from app.models.Calendar import Calendar
 from app.models.Event import Event
 
 class User:
-    def __init__(self, user_id: str):
+    def __init__(self, user_id: int):
         self.user_id = user_id
         self.calendar = Calendar(user_id)
 

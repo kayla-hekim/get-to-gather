@@ -3,7 +3,7 @@ from app.models.Event import Event
 from datetime import datetime
 
 class Calendar:
-    def __init__(self, user_id: str):
+    def __init__(self, user_id: int):
         self.user_id = user_id
         self.events: List[Event] = []
 

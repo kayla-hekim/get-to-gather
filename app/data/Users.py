@@ -1,10 +1,14 @@
 from app.models.User import User
 from typing import Dict
+from app.models.user_db import UserDB
+from sqlalchemy.future import select
 
-user_store: Dict[str, User] = {}
 
-def get_or_create_user(user_id: str) -> User:
-    if user_id not in user_store:
-        print(f"[INFO] Creating new user: {user_id}")
-        user_store[user_id] = User(user_id)
-    return user_store[user_id]
+async def get_or_create_user(db, user_id):
+    result = await db.execute(select(UserDB).where(UserDB.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        user = UserDB(user_id=user_id)
+        db.add(user)
+        await db.commit()
+    return user
