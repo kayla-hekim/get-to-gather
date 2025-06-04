@@ -5,3 +5,7 @@ google-api-python-client
 httpx
 python-dotenv
 python-dateutil
+sqlalchemy
+aiosqlite
+asyncpg
+greenlet
