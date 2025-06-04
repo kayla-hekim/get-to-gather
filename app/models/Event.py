@@ -12,6 +12,10 @@ class Event:
         self.calendar_id = calendar_id
 
     
+    def get_event_id(self):
+        return self.id
+
+    
     def set_title(self, new_title:str):
         if not isinstance(new_title, str) or not new_title.strip():
             raise ValueError("Event title must be included.")

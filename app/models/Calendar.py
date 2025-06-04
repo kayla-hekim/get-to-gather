@@ -11,12 +11,16 @@ class Calendar:
     def add_event(self, new_event: Event):
         if not isinstance(new_event, Event):
             raise ValueError("Event is not an actual event.")
+        if any(event.id == new_event.id for event in self.events):
+            raise ValueError("An event with this ID already exists.")
+        
         self.events.append(new_event)
 
 
     def delete_event(self, event_id:str):
         event = self.get_event_by_id(event_id)
         self.events.remove(event)
+        return True
     
 
     def update_event(self, event_id: str, updates: dict):
@@ -40,8 +44,8 @@ class Calendar:
         for event in self.events:
             if event.id == event_id:
                 return event
-        raise ValueError(f"No event found with id: {event_id}")
-
+        raise ValueError("Need Valid ID for event.")
+    
 
     def clear_all_events(self):
         self.events.clear()
@@ -73,10 +77,16 @@ class Calendar:
         )
     
 
-    def to_dict(self):
+    def to_serializable_dict(self):
+        def serialize_event(event):
+            d = event.to_dict()
+            d["start"] = d["start"].isoformat()
+            d["end"] = d["end"].isoformat()
+            return d
+
         return {
             "user_id": self.user_id,
-            "events": [event.to_dict() for event in self.events]
+            "events": [serialize_event(e) for e in self.events]
         }
 
 
